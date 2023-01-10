@@ -10,7 +10,7 @@
 - 拉取整个仓库(部分文件可以单独跑)
   ```
   // 以下几条命令 请不要带着 $/# 一起复制 这两个符号只是代表了所需权限
-  $ git clone https://github.com/yuanter/misaka
+  $ git clone https://github.com/yuanter/misaka.git
 - 安装依赖
   ```
   $ pip3 install -r requirements.txt
