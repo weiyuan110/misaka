@@ -1,5 +1,6 @@
 /*
 起飞线生活
+每天执行三次抽奖+农场任务
 
 地址：
 复制链接浏览器打开：https://m.360buyimg.com/babel/jfs/t1/92036/6/19877/112205/6395f615E345e78a8/54de5ad81ae58017.png
@@ -13,8 +14,7 @@
 
 [task_local]
 #起飞线生活
-0 1-23/3 * * * https://raw.githubusercontent.com/yuanter/misaka/master/qfxhd.js, tag=起飞线生活, enabled=true
-
+0 1-23/3 * * * https://raw.githubusercontent.com/yuanter/sajkda/master/qfxhd.js, tag=起飞线生活, enabled=true
 
 
 cron: 0 1-23/3 * * *
@@ -63,18 +63,21 @@ var timestamp = Math.round(new Date().getTime()).toString();
 
                 let num = index + 1
                 addNotifyStr(`\n==== 开始【第 ${num} 个账号】====\n`, true)
-
-                qfxhd = qfxhdArr[index];
-                restoken = qfxhd.match(/\.(.*?)\./)[1]
-                restoken=JSON.parse(new Buffer(restoken, 'base64').toString('utf8'))
-                restoken=restoken.data.refreshToken
-                await refreshTokens()
-                await lottery()
-                await lottery()
-                await lottery()
-                await info()
-                await first()
-                await water()
+                try{
+                    qfxhd = qfxhdArr[index];
+                    restoken = qfxhd.match(/\.(.*?)\./)[1]
+                    restoken=JSON.parse(new Buffer(restoken, 'base64').toString('utf8'))
+                    restoken=restoken.data.refreshToken
+                    await refreshTokens()
+                    await lottery()
+                    await lottery()
+                    await lottery()
+                    await info()
+                    await first()
+                    await water()
+                }catch{
+                    addNotifyStr(`\n==== 【第 ${num} 个账号】出现错误，可能是token已失效，执行下一个账号====\n`, true)
+                }
             }
             //await SendMsg(msg);
         }
