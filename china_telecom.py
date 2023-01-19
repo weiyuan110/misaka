@@ -33,6 +33,7 @@ from tools.rsa_encrypt import RSA_Encrypt
 from tools.tool import timestamp, get_environ, print_now
 from tools.ql_api import get_cookie
 from tools.send_msg import push
+from tools.notify import send
 from login.telecom_login import TelecomLogin
 from string import ascii_letters, digits
 import threading
@@ -60,22 +61,14 @@ class ChinaTelecom:
         self.key = "-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC+ugG5A8cZ3FqUKDwM57GM4io6\nJGcStivT8UdGt67PEOihLZTw3P7371+N47PrmsCpnTRzbTgcupKtUv8ImZalYk65\ndU8rjC/ridwhw9ffW2LBwvkEnDkkKKRi2liWIItDftJVBiWOh17o6gfbPoNrWORc\nAdcbpk2L+udld5kZNwIDAQAB\n-----END PUBLIC KEY-----"
 
     def req(self, url, method, data=None):
-        re_try = 3
-        while re_try > 0:
-            try:
-                if method == "GET":
-                    data = get(url, headers=self.headers).json()
-                    return data
-                elif method.upper() == "POST":
-                    data = post(url, headers=self.headers, json=data).json()
-                    return data
-                else:
-                    print_now("您当前使用的请求方式有误,请检查")
-                break
-            except:
-                re_try -= 1
-                sleep(5)
-                continue
+        if method == "GET":
+            data = get(url, headers=self.headers).json()
+            return data
+        elif method.upper() == "POST":
+            data = post(url, headers=self.headers, json=data).json()
+            return data
+        else:
+            print_now("您当前使用的请求方式有误,请检查")
 
     # 长明文分段rsa加密
     def telecom_encrypt(self, text):
@@ -87,11 +80,13 @@ class ChinaTelecom:
                 split_text = text[(32 * i):(32 * (i + 1))]
                 encrypt_text += RSA_Encrypt(self.key).encrypt(split_text)
             return encrypt_text
+
     @staticmethod
     def geneRandomToken():
         randomList = choices(ascii_letters + digits, k=129)
         token = f"V1.0{''.join(x for x in randomList)}"
         return token
+
     # 签到
     def chech_in(self):
         url = "https://wapside.189.cn:9001/jt-sign/api/home/sign"
@@ -120,7 +115,10 @@ class ChinaTelecom:
     def do_task(self):
         url = "https://wapside.189.cn:9001/jt-sign/paradise/polymerize"
         for task in self.task_list:
-            if "翻牌抽好礼" in task["title"] or "查看我的订单" in task["title"] or "查看我的云盘" in task["title"]:
+            if "翻牌抽好礼" in task["title"] or "查看我的订单" in task["title"] or "查看我的云盘" in task[
+                "title"] or "查看权益中心" in task["title"] or "访问宽带余额" in task["title"] or "访问“我的宽带”" in \
+                    task["title"] or "查看“装修进度”" in task["title"] or "查看视频彩铃" in task["title"]:
+                # if "翻牌抽好礼" in task["title"] or "查看我的订单" in task["title"] or "查看我的云盘" in task["title"]:
                 print_now(f'{task["title"]}----{task["taskId"]}')
                 decrept_para = f'{{"phone":"{self.phone}","jobId":"{task["taskId"]}"}}'
                 data = {
@@ -222,7 +220,6 @@ class ChinaTelecom:
             print_now(self.msg)
             push("电信签到兑换", self.msg)
 
-
     # 查询金豆数量
     def coin_info(self):
         url = "https://wapside.189.cn:9001/jt-sign/api/home/userCoinInfo"
@@ -245,6 +242,7 @@ class ChinaTelecom:
         data = post(url, headers=self.headers_live, json=data).json()
         self.authorization = f"Bearer {data['data']['token']}"
         self.headers_live["Authorization"] = self.authorization
+
     def get_usercode(self):
         """
         授权星播客登录获取 usercode
@@ -260,6 +258,7 @@ class ChinaTelecom:
         location = get(url, headers=self.headers_live, allow_redirects=False).headers["location"]
         usercode = findall(r"usercode=(.*?)&", location)[0]
         self.usercode = usercode
+
     def watch_video(self):
         """
         看视频 一天可完成6次
@@ -274,6 +273,7 @@ class ChinaTelecom:
             print("看小视频15s完成一次")
         else:
             print(f"完成看小视频15s任务失败, 失败原因为{data['msg']}")
+
     def like(self):
         """
         点赞直播间 可完成5次
@@ -296,6 +296,7 @@ class ChinaTelecom:
                     print(f"完成点赞直播间任务失败,原因是{data['msg']}")
             except Exception:
                 print(Exception)
+
     def watch_live(self):
         # 首先初始化任务,等待15秒倒计时后再完成 可完成10次
         url = "https://xbk.189.cn/xbkapi/lteration/liveTask/index/watchLiveInit"
@@ -326,10 +327,12 @@ class ChinaTelecom:
     def get_userid(self):
         url = "https://wapside.189.cn:9001/jt-sign/api/home/homeInfo"
         body = {
-            "para": self.telecom_encrypt(f'{{"phone":"{self.phone}","signDate":"{datetime.now().__format__("%Y-%m")}"}}')
+            "para": self.telecom_encrypt(
+                f'{{"phone":"{self.phone}","signDate":"{datetime.now().__format__("%Y-%m")}"}}')
         }
-        userid = post(url, json=body, headers=self.headers).json()["data"]["userInfo"]["userThirdId"]
+        userid = post(url, json=body).json()["data"]["userInfo"]["userThirdId"]
         return userid
+
     def share(self):
         """
         50的分享任务 token不做校检 有值即可 若登录成功了 使用自己的token 否则生成随机的token
@@ -363,6 +366,7 @@ class ChinaTelecom:
         }
         data = post(url, headers=headers, json=body).json()
         print_now(data)
+
     def main(self):
         self.init()
         self.chech_in()
@@ -380,7 +384,7 @@ class ChinaTelecom:
             for i in range(6):
                 self.watch_video()
                 sleep(15)
-            # self.like()
+            self.like()
             for i in range(10):
                 try:
                     self.watch_live()
@@ -389,6 +393,7 @@ class ChinaTelecom:
         self.coin_info()
         self.msg += f"你账号{self.phone} 当前有金豆{self.coin_count['totalCoin']}"
         push("电信app签到", self.msg)
+        
     def get_coin_info(self):
         url = "https://wapside.189.cn:9001/jt-sign/api/getCoinInfo"
         decrept_para = f'{{"phone":"{self.phone}","pageNo":0,"pageSize":10,type:"1"}}'
