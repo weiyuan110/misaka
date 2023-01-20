@@ -39,6 +39,8 @@ from string import ascii_letters, digits
 import threading
 
 
+msg_str = ""
+
 
 class ChinaTelecom:
     def __init__(self, account, pwd, checkin=True):
@@ -119,7 +121,8 @@ class ChinaTelecom:
                 "title"] or "查看权益中心" in task["title"] or "访问宽带余额" in task["title"] or "访问“我的宽带”" in \
                     task["title"] or "查看“装修进度”" in task["title"] or "查看视频彩铃" in task["title"]:
                 # if "翻牌抽好礼" in task["title"] or "查看我的订单" in task["title"] or "查看我的云盘" in task["title"]:
-                print_now(f'{task["title"]}----{task["taskId"]}')
+                #print_now(f'{task["title"]}----{task["taskId"]}')
+                print_now(f'{task["title"]}')
                 decrept_para = f'{{"phone":"{self.phone}","jobId":"{task["taskId"]}"}}'
                 data = {
                     "para": self.telecom_encrypt(decrept_para)
@@ -188,6 +191,7 @@ class ChinaTelecom:
 
     # 若连续签到为7天 则兑换
     def convert_reward(self):
+        global msg_str #声明我们在函数内部使用的是在函数外部定义的全局变量msg_str
         url = "https://wapside.189.cn:9001/jt-sign/reward/convertReward"
         try:
             rewardId = self.query_signinfo()  # "baadc927c6ed4d8a95e28fa3fc68cb9"
@@ -212,13 +216,15 @@ class ChinaTelecom:
             sleep(6)
         reward_status = self.get_coin_info()
         if reward_status:
-            self.msg += f"账号{self.phone}连续签到7天兑换1元话费成功\n"
+            self.msg += f"账号{self.phone}连续签到7天兑换2元话费成功\n"
+            msg_str  += f"账号{self.phone}连续签到7天兑换2元话费成功\n"
             print_now(self.msg)
-            push("电信签到兑换", self.msg)
+            #push("电信签到兑换", self.msg)
         else:
-            self.msg += f"账号{self.phone}连续签到7天兑换1元话费失败 明天会继续尝试兑换\n"
+            self.msg += f"账号{self.phone}连续签到7天兑换2元话费失败 明天会继续尝试兑换\n"
+            msg_str  += f"账号{self.phone}连续签到7天兑换2元话费失败 明天会继续尝试兑换\n"
             print_now(self.msg)
-            push("电信签到兑换", self.msg)
+            #push("电信签到兑换", self.msg)
 
     # 查询金豆数量
     def coin_info(self):
@@ -368,6 +374,7 @@ class ChinaTelecom:
         print_now(data)
 
     def main(self):
+        global msg_str #声明我们在函数内部使用的是在函数外部定义的全局变量msg_str
         self.init()
         self.chech_in()
         self.get_task()
@@ -391,8 +398,9 @@ class ChinaTelecom:
                 except:
                     continue
         self.coin_info()
-        self.msg += f"你账号{self.phone} 当前有金豆{self.coin_count['totalCoin']}"
-        push("电信app签到", self.msg)
+        self.msg += f"\n账号{self.phone} 当前有金豆{self.coin_count['totalCoin']}\n"
+        msg_str  += f"\n账号{self.phone} 当前有金豆{self.coin_count['totalCoin']}\n"
+        #push("电信app签到", self.msg)
         
     def get_coin_info(self):
         url = "https://wapside.189.cn:9001/jt-sign/api/getCoinInfo"
@@ -470,3 +478,4 @@ if __name__ == '__main__':
         print("\n")
     for i in l:
         i.join()
+    send("电信签到",msg_str)
