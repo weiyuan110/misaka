@@ -40,7 +40,7 @@ import threading
 
 
 
-msg_str = ""
+msg_str = "联通话费兑换路径：联通APP搜索阅读--->阅读专区--->我的--->话费红包，可兑换3元或者5元话费抵扣券，最后使用沃钱包支付即可\n\n"
 
 """主类"""
 class China_Unicom:
