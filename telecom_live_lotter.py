@@ -206,10 +206,10 @@ def get_data():
             if time.strftime('%Y-%m-%d') in i['start_time']:
                 if i not in all_list:              
                     print('今日开播时间：'+i['start_time']+' 直播间名称：'+i['nickname'] ) 
-                    print('安卓浏览器直接打开链接  ctclient://startapp/android/open?LinkType=5&Link=https://xbk.189.cn/xbk/livingRoom?liveId='+str(i['liveId']) ) 
-                    print('直接打开链接  https://xbk.189.cn/xbk/livingRoom?liveId='+str(i['liveId']) ) 
+                    print('安卓浏览器(如via、alook浏览器)直接打开链接  ctclient://startapp/android/open?LinkType=5&Link=https://xbk.189.cn/xbk/livingRoom?liveId='+str(i['liveId']) ) 
+                    print('通用打开方式，先登录：https://xbk.189.cn/xbk/newHome  然后直接打开  https://xbk.189.cn/xbk/livingRoom?liveId='+str(i['liveId']) ) 
                     print('\n\n')
-                    msg_str += '今日开播时间：'+i['start_time']+' 直播间名称：'+i['nickname']+'\n安卓浏览器直接打开链接：\nctclient://startapp/android/open?LinkType=5&Link=https://xbk.189.cn/xbk/livingRoom?liveId='+str(i['liveId'])+'\n直接打开链接：\nhttps://xbk.189.cn/xbk/livingRoom?liveId='+str(i['liveId'])+'\n\n'
+                    msg_str += '今日开播时间：'+i['start_time']+' 直播间名称：'+i['nickname']+'\n1、安卓打开方式\n浏览器(如via、alook浏览器)直接打开链接：\nctclient://startapp/android/open?LinkType=5&Link=https://xbk.189.cn/xbk/livingRoom?liveId='+str(i['liveId'])+'\n2、通用打开方式\n先登录：\nhttps://xbk.189.cn/xbk/newHome\n然后直接打开链接：\nhttps://xbk.189.cn/xbk/livingRoom?liveId='+str(i['liveId'])+'\n\n'
                     all_list.append(i)
         code += 1
     list = {}
