@@ -50,7 +50,7 @@ class ChinaTelecom:
         if pwd != "" and checkin:
             userLoginInfo = TelecomLogin(account, pwd).main()
             self.ticket = userLoginInfo[0]
-            self.token = userLoginInfo[1]
+            self.old_token = userLoginInfo[1]
 
     def init(self):
         self.msg = ""
@@ -61,6 +61,8 @@ class ChinaTelecom:
             "User-Agent": self.ua
         }
         self.key = "-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC+ugG5A8cZ3FqUKDwM57GM4io6\nJGcStivT8UdGt67PEOihLZTw3P7371+N47PrmsCpnTRzbTgcupKtUv8ImZalYk65\ndU8rjC/ridwhw9ffW2LBwvkEnDkkKKRi2liWIItDftJVBiWOh17o6gfbPoNrWORc\nAdcbpk2L+udld5kZNwIDAQAB\n-----END PUBLIC KEY-----"
+        self.token = RSA_Encrypt(self.key).encrypt(self.old_token)
+
 
     def req(self, url, method, data=None):
         if method == "GET":
@@ -122,17 +124,17 @@ class ChinaTelecom:
                     task["title"] or "查看“装修进度”" in task["title"] or "查看视频彩铃" in task["title"]:
                 # if "翻牌抽好礼" in task["title"] or "查看我的订单" in task["title"] or "查看我的云盘" in task["title"]:
                 #print_now(f'{task["title"]}----{task["taskId"]}')
-                print_now(f'{task["title"]}')
+                #print_now(f'{task["title"]}')
                 decrept_para = f'{{"phone":"{self.phone}","jobId":"{task["taskId"]}"}}'
                 data = {
                     "para": self.telecom_encrypt(decrept_para)
                 }
                 data = self.req(url, "POST", data)
                 if data["data"]["code"] == 0:
-                    # print(data["resoultMsg"])
-                    print_now(data)
+                    print(f'账号{self.phone} {task["title"]}-------------------{data["resoultMsg"]}')
+                    # print_now(data)
                 else:
-                    print_now(f'聚合任务完成失败,原因是{data["resoultMsg"]}')
+                    print_now(f'账号{self.phone} 聚合任务完成失败,原因是{data["resoultMsg"]}')
 
     # 给宠物喂食
     def food(self):
@@ -144,7 +146,7 @@ class ChinaTelecom:
         if res_data["resoultCode"] == "0":
             print_now(res_data["resoultMsg"])
         else:
-            print_now(f'聚合任务完成失败,原因是{res_data["resoultMsg"]}')
+            print_now(f'账号{self.phone} 聚合任务完成失败,原因是{res_data["resoultMsg"]}')
 
     # 查询宠物等级
     def get_level(self):
@@ -155,7 +157,7 @@ class ChinaTelecom:
         data = self.req(url, "POST", body)
         self.level = int(data["userInfo"]["paradiseDressup"]["level"])
         if self.level < 5:
-            print_now("当前等级小于5级 不领取等级权益")
+            print_now("账号{self.phone} 当前等级小于5级 不领取等级权益")
             return
         url = "https://wapside.189.cn:9001/jt-sign/paradise/getLevelRightsList"
         right_list = self.req(url, "POST", body)[f"V{self.level}"]
@@ -276,9 +278,9 @@ class ChinaTelecom:
         }
         data = post(url, headers=self.headers_live, json=data).json()
         if data["code"] == 0:
-            print("看小视频15s完成一次")
+            print("账号{self.phone} 看小视频15s完成一次")
         else:
-            print(f"完成看小视频15s任务失败, 失败原因为{data['msg']}")
+            print(f"账号{self.phone} 完成看小视频15s任务失败, 失败原因为{data['msg']}")
 
     def like(self):
         """
@@ -299,7 +301,7 @@ class ChinaTelecom:
                     sleep(2)
                     print(data["msg"])
                 else:
-                    print(f"完成点赞直播间任务失败,原因是{data['msg']}")
+                    print(f"账号{self.phone} 完成点赞直播间任务失败,原因是{data['msg']}")
             except Exception:
                 print(Exception)
 
@@ -324,11 +326,11 @@ class ChinaTelecom:
             sleep(15)
             data = post(url, headers=self.headers_live, json=data).json()
             if data["code"] == 0:
-                print("完成1次观看直播任务")
+                print("账号{self.phone} 完成1次观看直播任务")
             else:
-                print(f"完成观看直播任务失败,原因是{data['msg']}")
+                print(f"账号{self.phone} 完成观看直播任务失败,原因是{data['msg']}")
         else:
-            print(f"初始化观看直播任务失败，失败原因为{data['msg']}")
+            print(f"账号{self.phone} 初始化观看直播任务失败，失败原因为{data['msg']}")
 
     def get_userid(self):
         url = "https://wapside.189.cn:9001/jt-sign/api/home/homeInfo"
@@ -386,17 +388,17 @@ class ChinaTelecom:
         if datetime.now().day == 1:
             self.get_level()
         self.share()
-        if self.ticket != "":
-            self.author()
-            for i in range(6):
-                self.watch_video()
-                sleep(15)
-            self.like()
-            for i in range(10):
-                try:
-                    self.watch_live()
-                except:
-                    continue
+        # if self.ticket != "":
+        #     self.author()
+        #     for i in range(6):
+        #         self.watch_video()
+        #         sleep(15)
+        #     self.like()
+        #     for i in range(10):
+        #         try:
+        #             self.watch_live()
+        #         except:
+        #             continue
         self.coin_info()
         self.msg += f"\n账号{self.phone} 当前有金豆{self.coin_count['totalCoin']}\n"
         msg_str  += f"\n账号{self.phone} 当前有金豆{self.coin_count['totalCoin']}\n"
