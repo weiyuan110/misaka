@@ -50,7 +50,7 @@ class ChinaTelecom:
         if pwd != "" and checkin:
             userLoginInfo = TelecomLogin(account, pwd).main()
             self.ticket = userLoginInfo[0]
-            self.old_token = userLoginInfo[1]
+            self.token = userLoginInfo[1]
 
     def init(self):
         self.msg = ""
@@ -61,7 +61,6 @@ class ChinaTelecom:
             "User-Agent": self.ua
         }
         self.key = "-----BEGIN PUBLIC KEY-----\nMIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQC+ugG5A8cZ3FqUKDwM57GM4io6\nJGcStivT8UdGt67PEOihLZTw3P7371+N47PrmsCpnTRzbTgcupKtUv8ImZalYk65\ndU8rjC/ridwhw9ffW2LBwvkEnDkkKKRi2liWIItDftJVBiWOh17o6gfbPoNrWORc\nAdcbpk2L+udld5kZNwIDAQAB\n-----END PUBLIC KEY-----"
-        self.token = RSA_Encrypt(self.key).encrypt(self.old_token)
 
 
     def req(self, url, method, data=None):
