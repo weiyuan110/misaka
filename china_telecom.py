@@ -156,7 +156,7 @@ class ChinaTelecom:
         data = self.req(url, "POST", body)
         self.level = int(data["userInfo"]["paradiseDressup"]["level"])
         if self.level < 5:
-            print_now("账号{self.phone} 当前等级小于5级 不领取等级权益")
+            print_now(f"账号{self.phone} 当前等级小于5级 不领取等级权益")
             return
         url = "https://wapside.189.cn:9001/jt-sign/paradise/getLevelRightsList"
         right_list = self.req(url, "POST", body)[f"V{self.level}"]
@@ -383,7 +383,7 @@ class ChinaTelecom:
         if foods != 0:
             for i in range(foods):
                 self.food()
-        # self.convert_reward()
+        self.convert_reward()
         if datetime.now().day == 1:
             self.get_level()
         self.share()
@@ -410,8 +410,13 @@ class ChinaTelecom:
             "para": self.telecom_encrypt(decrept_para)
         }
         data = self.req(url, "POST", data)
-        if "skuName" in data["data"]["biz"]["results"][0] and "连续签到" in data["data"]["biz"]["results"][0]["skuName"]:
-            return True
+        
+        try:
+            if "skuName" in data["data"]["biz"]["results"][0] and "连续签到" in data["data"]["biz"]["results"][0]["skuName"]:
+                return True
+        except Exception as e:
+                print(f"账号{self.phone}出现错误，请求失败结果: " )
+                print_now(data)
         return False
 
 
