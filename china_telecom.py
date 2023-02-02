@@ -383,7 +383,7 @@ class ChinaTelecom:
         if foods != 0:
             for i in range(foods):
                 self.food()
-        self.convert_reward()
+        # self.convert_reward()
         if datetime.now().day == 1:
             self.get_level()
         self.share()
