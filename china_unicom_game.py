@@ -23,6 +23,12 @@ from random import randint
 from tools.tool import get_environ, timestamp
 from tools.send_msg import push
 from uuid import uuid4
+from tools.notify import send
+from tools.ql_api import get_cookie
+import threading
+
+
+msg_str = "活动入口: 联通app首页-5g新通信-联通畅游\n\n"
 
 class CUG:
     def __init__(self, phone, appid, token_online):
@@ -135,6 +141,7 @@ class CUG:
         data = post(url, headers=self.headers, json=body).json()
         print(data)
 
+    # 兑换5元话费，兑换其他话费，自行抓包替换productId
     def exchange(self):
         def get_exchange():
             url = "https://game.wostore.cn/api/app/game/v2/shop/getToken"
@@ -147,6 +154,12 @@ class CUG:
         }
         data = post(url, headers=self.headers, json=body).json()
         print(data)
+        try:
+            print(f"账号{self.phone_num} 执行兑换5元话费结果为：{data['msg']}\n\n")
+            return f"账号{self.phone_num} 执行兑换5元话费结果为：{data['msg']}\n\n"
+        except Exception as e:
+            print(f"账号{self.phone_num}出现错误，请求失败结果: " )
+            print_now(data)
     def init(self):
         """
         初始化活动及查询积分
@@ -194,6 +207,7 @@ class CUG:
         print("当前抽奖轮次已全部参加或没有符合条件的场次 跳过")
         return None
     def main(self):
+        global msg_str #声明我们在函数内部使用的是在函数外部定义的全局变量msg_str
         self.get_ecsToken()
         self.login()
         old_score = self.init()
@@ -202,14 +216,55 @@ class CUG:
         self.pay_lotter(self.get_pay_lotter_list())
         self.play_game()
         [self.finish_task(task_id, productId) for task_id, productId in self.get_task().items()]
+        
+        # 新增调用原作者写好的兑换奖品方法
+        exchange_result = self.exchange()
+
         sleep(5)
         now_score = self.init()
         today_score = now_score - old_score
-        self.msg += f"账号{self.phone_num}---今日获得{today_score}分, 当前共有{now_score}分\n"
-        push("某通畅游", self.msg)
-if __name__ == '__main__':
-    unicom_game_info = get_environ("UNICOM_GAME_ACCOUNT_INFO")
+        self.msg += f"账号{self.phone_num}---今日获得{today_score}分, 当前共有{now_score}分\n{exchange_result}"
+        msg_str += f"账号{self.phone_num}---今日获得{today_score}分, 当前共有{now_score}分\n{exchange_result}"
+        # push("某通畅游", self.msg)
+
+
+def start(unicom_game_info):
     if unicom_game_info == "":
         exit(0)
     cug = CUG(*unicom_game_info.split("#"))
     cug.main()
+    print("\n")
+    print("\n")  
+
+if __name__ == '__main__':
+    """读取环境变量"""
+    l = []
+    user_map = []
+    cklist = get_cookie("UNICOM_GAME_ACCOUNT_INFO")
+    for i in range(len(cklist)):
+        #以&分割开的ck
+        split1 = cklist[i].split("&")
+        if len(split1)>1:
+            for j in range(len(split1)):
+                user_map.append(split1[j])
+        else:
+            user_map.append(cklist[i])
+
+    
+    
+    for i in range(len(user_map)):
+        unicom_game_info=""
+        unicom_game_info = user_map[i].split("&")[0]
+        if unicom_game_info == "":
+            print("当前账号未填写CK 跳过")
+            print("\n")
+            continue
+        print('开始执行第{}个账号：{}'.format((i+1),unicom_game_info.split("#")[0]))
+        p = threading.Thread(target=start,args=(unicom_game_info, ))
+        l.append(p)
+        p.start()
+        print("\n")
+    for i in l:
+        i.join()
+    send("联通畅游",msg_str)
+    
