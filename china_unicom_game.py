@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -- coding: utf-8 --
 # -------------------------------
-# @Author : github@limoruirui https://github.com/limoruirui
+# @Author : github@limoruirui https://github.com/limoruirui by院长修改
 # @Time : 2023/1/27 21:03
 # cron "" script-path=xxx.py,tag=匹配cron用
 # const $ = new Env('某通畅游');
@@ -11,8 +11,11 @@
 2. 活动入口: 某通app首页-5g新通信-某通畅游
 3. 暂时先弄抓包版本 后续再加短信验证码获取token_online
 4. 环境变量 UNICOM_GAME_ACCOUNT_INFO 格式 某通手机号#appid#token_online
+    抓包得到appid和token_online，不要名称和等号，只要其内容值即可
     appid可抓包获取 安卓也有不抓包的方法 自行搜索
     token_online 抓包获取 搜索 mobileService/onLine 切换账号可触发此数据包 此数据包包含 token_online和appid
+    login文件夹内有短信验证码登录(经过几天的反馈测试 不一定能用 有人可以有人不行 暂未知道原因) 抄自小一佬 github@https://github.com/xream 感谢
+    默认不添加新crontab 需要手动新建 task yuanter_misaka/login/unicom_login.py
 5. 特别说明
     i.第一次运行会因为没有积分而无法进行积分抽奖 可再运行一次或者等第二天再抽奖即可 目前场次不多 不会每天都抽
     ii. 兑换话费已写 但未调用 有需要自行修改调用
@@ -31,10 +34,10 @@ import threading
 msg_str = "活动入口: 联通app首页-5g新通信-联通畅游\n\n"
 
 class CUG:
-    def __init__(self, phone, appid, token_online):
-        self.phone_num = phone
-        self.appId = appid
-        self.token_online = token_online
+    def __init__(self, phone: str, appid: str, token_online: str):
+        self.phone_num = phone.rstrip("\n")
+        self.appId = appid.rstrip("\n")
+        self.token_online = token_online.rstrip("\n")
         default_ua = f"Mozilla/5.0 (Linux; Android {randint(8, 13)}; SM-S908U Build/TP1A.220810.014; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/{randint(95, 108)}.0.5359.128 Mobile Safari/537.36; unicom{{version:android@9.0{randint(0, 6)}00,desmobile:{self.phone_num}}};devicetype{{deviceBrand:,deviceModel:}};{{yw_code:}}"
         self.run_ua = get_environ(key="UNICOM_USERAGENT", default=default_ua, output=False)
         self.deviceId = uuid4().hex
@@ -46,10 +49,16 @@ class CUG:
             "content-type": "application/x-www-form-urlencoded",
             "user-agent": self.run_ua
         }
-        data = post(url, headers=headers, data=body).json()
-        print(data)
-        self.ecs_token = data["ecs_token"]
-        # print(self.ecs_token)
+        try:
+            data = post(url, headers=headers, data=body).json()
+            print(data)
+            self.ecs_token = data["ecs_token"]
+            # print(self.ecs_token)
+        except Exception as e:
+            print(f"\n账号{self.phone_num}获取token请求出现错误,请检查CK是否正确或已失效，跳过该账号\n" )
+            exit(0)
+            
+
     def login(self):
         url = "https://game.wostore.cn/api/app//user/v2/login"
         body = {
@@ -73,23 +82,29 @@ class CUG:
             "accept-encoding": "gzip, deflate",
             "accept-language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7"
         }
-        data = post(url, headers=headers, json=body).json()
-        self.access_token = data["data"]["access_token"]
-        self.headers = {
-            "pragma": "no-cache",
-            "cache-control": "no-cache",
-            "accept": "application/json, text/plain, */*",
-            "authorization": self.access_token,
-            "user-agent": self.run_ua,
-            "origin": "https://web.wostore.cn",
-            "x-requested-with": "com.sinovatech.unicom.ui",
-            "sec-fetch-site": "same-site",
-            "sec-fetch-mode": "cors",
-            "sec-fetch-dest": "empty",
-            "referer": "https://web.wostore.cn/",
-            "accept-encoding": "gzip, deflate",
-            "accept-language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7"
-        }
+        data = ""
+        try:
+            data = post(url, headers=headers, json=body).json()
+            self.access_token = data["data"]["access_token"]
+            self.headers = {
+                "pragma": "no-cache",
+                "cache-control": "no-cache",
+                "accept": "application/json, text/plain, */*",
+                "authorization": self.access_token,
+                "user-agent": self.run_ua,
+                "origin": "https://web.wostore.cn",
+                "x-requested-with": "com.sinovatech.unicom.ui",
+                "sec-fetch-site": "same-site",
+                "sec-fetch-mode": "cors",
+                "sec-fetch-dest": "empty",
+                "referer": "https://web.wostore.cn/",
+                "accept-encoding": "gzip, deflate",
+                "accept-language": "zh-CN,zh;q=0.9,en-US;q=0.8,en;q=0.7"
+            }
+        except Exception as e:
+            print(f"\n账号{self.phone_num}登录请求出现错误,请检查CK是否正确或已失效，跳过该账号\n" )
+            exit(0)
+        
 
     def check_in(self):
         url = "https://game.wostore.cn/api/app/user/v2/signIn"
@@ -155,8 +170,8 @@ class CUG:
         data = post(url, headers=self.headers, json=body).json()
         print(data)
         try:
-            print(f"账号{self.phone_num} 执行兑换5元话费结果为：{data['msg']}\n\n")
-            return f"账号{self.phone_num} 执行兑换5元话费结果为：{data['msg']}\n\n"
+            print(f"账号{self.phone_num}---执行兑换5元话费结果为：{data['msg']}\n\n")
+            return f"账号{self.phone_num}---执行兑换5元话费结果为：{data['msg']}\n\n"
         except Exception as e:
             print(f"账号{self.phone_num}出现错误，请求失败结果: " )
             print_now(data)
@@ -223,8 +238,8 @@ class CUG:
         sleep(5)
         now_score = self.init()
         today_score = now_score - old_score
-        self.msg += f"账号{self.phone_num}---今日获得{today_score}分, 当前共有{now_score}分\n{exchange_result}"
-        msg_str += f"账号{self.phone_num}---今日获得{today_score}分, 当前共有{now_score}分\n{exchange_result}"
+        self.msg += f"账号{self.phone_num}---本次运行获得{today_score}分, 当前共有{now_score}分\n{exchange_result}"
+        msg_str += f"账号{self.phone_num}---本次运行获得{today_score}分, 当前共有{now_score}分\n{exchange_result}"
         # push("某通畅游", self.msg)
 
 
@@ -244,9 +259,13 @@ if __name__ == '__main__':
     for i in range(len(cklist)):
         #以&分割开的ck
         split1 = cklist[i].split("&")
+        split2 = cklist[i].split("\n")
         if len(split1)>1:
             for j in range(len(split1)):
                 user_map.append(split1[j])
+        elif len(split2)>1:
+            for j in range(len(split2)):
+                user_map.append(split2[j])
         else:
             user_map.append(cklist[i])
 
