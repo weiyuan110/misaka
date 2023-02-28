@@ -47,6 +47,10 @@
   $ wget https://raw.githubusercontent.com/yuanter/misaka/master/requirements.txt
   $ pip3 install -r requirements.txt
 - 按照脚本文件内的说明设置环境变量
+## 常见异常说明
+### 1. no module name "tools" 未按要求拉库 看md说明 根据自己环境拉
+### 2. no module name "tools.xxx" 则将python3中的tools依赖删除
+### 3. 运行时出现 sslError 之类的提示 则为自己网络问题
 ## 环境变量说明 
 - 一.推送
   - 1.tgbot 
